@@ -1,0 +1,6 @@
+site_name: interview
+site_url: https://example.com/
+nav:
+  - Home: index.md
+  - python面试: python面试.md
+theme: readthedocs
