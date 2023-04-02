@@ -294,3 +294,26 @@ print(type(gen))  # 'generator' object
 print(next(gen))  # 'hello'
 print(next(gen))  # 'world'
 ```
+
+### 基于生成器的协程
+
+**python3之前没有原生协程，只有基于生成器的协程**
+
+- pep342增强生成器功能
+- 生成器可以通过yield暂停执行和产出数据
+- 同时支持send()向生成器发送数据和throw()向生成器抛出异常
+
+```python
+def coro():
+    hello = yield 'hello'  # yield关键字在=右边作为表达式，可以被send值
+    yield hello
+
+
+c = coro()
+# 输出hello,这里调用next产出第一个值hello，之后函数暂停
+print(next(c))
+# 再次调用send发送值,此时hello变量赋值为'world',然后yield产出hello变量的值'world'
+print(c.send('world'))
+print(c.send('end'))
+# 之后协程结束，后续再send值会抛出异常StopIteration
+```
