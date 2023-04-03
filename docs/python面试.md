@@ -296,7 +296,6 @@ print(next(gen))  # 'world'
 ```
 
 ### 基于生成器的协程
-
 **python3之前没有原生协程，只有基于生成器的协程**
 
 - pep342增强生成器功能
@@ -314,6 +313,157 @@ c = coro()
 print(next(c))
 # 再次调用send发送值,此时hello变量赋值为'world',然后yield产出hello变量的值'world'
 print(c.send('world'))
-print(c.send('end'))
 # 之后协程结束，后续再send值会抛出异常StopIteration
 ```
+
+### 协程注意点
+- 协程需要使用send(None)或者next(coroutine)来预激(prime)才能启动
+- 在yield处协程会暂停执行
+- 单独的yield value会产出值给调用方
+- 可以通过coroutine.send(value)来给协程发送值，发送的值会赋值给yield表达式左边的变量
+- 协程执行完成后(没有遇到下一个yield语句)会抛出StopIteration异常
+
+### 协程装饰器
+**避免每次都要send预激它**
+```python
+from functools import wraps
+
+
+def coroutine(func):  # 这样就不用每次都send(None)启动了
+    """装饰器:向前执行到第一个yield表达式，预激func"""
+    @wraps(func)
+    def primer(*args, **kwargs):
+        gen = func(*args, **kwargs)
+        next(gen)
+        return gen
+    return primer
+```
+
+### python3.5之后的原生协程
+**python3.5引入async/await支持原生协程(native coroutine)**
+```python
+import asyncio
+import datetime
+import random
+
+
+async def display_date(num, loop):
+    end_time = loop.time() + 50.0
+    while True:
+        print('Loop: {} Time: {}'.format(num, datetime.datetime.now()))
+        if (loop.time()+1.0) >= end_time:
+            break
+        await asyncio.sleep(random.randint(0, 5))
+
+
+loop = asyncio.get_event_loop()
+asyncio.ensure_future(display_date(1, loop))
+asyncio.ensure_future(display_date(2, loop))
+loop.run_forever()
+```
+
+
+## 深拷贝vs浅拷贝
+
+### 什么是深拷贝、浅拷贝
+- 浅拷贝: 重新分配一块内存，创建一个新的对象，但里面的元素是原对象中各个子对象的引用
+- 深拷贝: 重新分配一块内存，创建一个新的对象，且里面的元素也是以递归的方式创建新的子对象并拷贝到新对象中
+- 引用:   变量的赋值
+
+### python中如何实现深拷贝
+**通过deep.deepcopy()**
+
+```python
+import copy
+
+
+def refer():
+    """对象引用"""
+    a = [[1, 2], 3]
+    b = a
+    print("refer:   a is b? {}".format(a is b))
+
+
+def shallow_copy():
+    """浅拷贝"""
+    a = [[1, 2], 3]
+    b = copy.copy(a)
+    print("shallow: a is b? {}".format(a is b))
+    print("shallow: a[0] is b[0]? {}".format(a[0] is b[0]))
+    b[0].append(0)
+    print("shallow: a={}, b={}".format(a, b))
+
+
+def deep_copy():
+    """深拷贝"""
+    a = [[1, 2], 3]
+    b = copy.deepcopy(a)
+    print("deep:    a is b? {}".format(a is b))
+    print("deep:    a[0] is b[0]? {}".format(a[0] is b[0]))
+    b[0].append(0)
+    print("deep:    a={}, b={}".format(a, b))
+
+
+refer()
+shallow_copy()
+deep_copy()
+```
+![](img/2023-04-03_14-36.jpg) 
+
+### python中如何正确初始化一个二维数组
+
+***方式二实际上并不是创建了一个新的二维数组，而是创建了三个指向array的引用***
+```python
+# 方式一: 列表推导式方式
+n, m = 3, 4
+a = [[0 for _ in range(m)] for i in range(n)]
+print(a)
+a[0][0] = 1
+print(a)
+for i in range(n):
+    print("第{}个元素的地址是: {}".format(i, id(a[i])))
+print()
+
+
+# 方式二
+array = [0 for _ in range(m)]
+matrix = [array] * n
+print(matrix)
+matrix[0][0] = 1
+print(matrix)
+for i in range(n):
+    print("第{}个元素的地址是: {}".format(i, id(matrix[i])))
+```
+![](img/2023-04-03_15-03.jpg) 
+
+
+## 数据结构与算法
+pass
+
+
+## 面向对象
+
+### 组合与继承
+**优先使用组合而非继承**
+
+- 组合是使用其他的类实例作为自己的一个属性(Has-a关系)
+- 子类继承父类的属性和方法(Is-a关系)
+- 优先使用组合保持代码简单
+
+### 类变量和实例变量
+- 类变量由所有实例共享
+- 实例变量由实例单独享有，不同实例之间不影响
+- 当我们需要在一个类的不同实例之间共享变量的时候使用类变量
+
+### classmethod vs staticmethod
+- 都可以使用Class.method()的方式使用
+- classmethod第一个参数是cls,可以引用类变量
+- staticmethod使用起来和普通函数一样，只不过放在类里去组织
+
+### 元类
+**元类(Meta Class)是创建类的类**
+
+- 元类允许我们控制类的生成，比如修改类的属性等
+- 使用type来定义元类
+- 元类最常见的一个使用场景就是ORM框架
+
