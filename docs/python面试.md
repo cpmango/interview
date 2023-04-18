@@ -524,3 +524,78 @@ __', 'bar', 'hello']
 """
 ```
 
+
+## 装饰器(Decorator)
+### 什么是装饰器
+
+- Python中一切皆对象，函数也可以当作参数传递
+- 装饰器是接受函数作为参数，添加功能后返回一个新函数的函数(类)
+- python中通过@使用装饰器
+
+### 函数装饰器
+```python
+import time
+
+def log_time(func):
+    def _log(*args, **kwargs):
+        beg = time.time()
+        res = func(*args, **kwargs)
+        print('use time: {}'.format(time.time()-beg))
+        return res
+    return _log
+
+
+@log_time
+def mysleep():
+    time.sleep(1)
+
+
+mysleep()
+```
+
+### 类装饰器
+```python
+import time
+
+class LogTime:
+    def __call__(self, func):
+        def _log(*args, **kwargs):
+            beg = time.time()
+            res = func(*args, **kwargs)
+            print('use time: {}'.format(time.time()-beg))
+            return res
+        return _log
+
+@LogTime()
+def mysleep():
+    time.sleep(1)
+
+
+mysleep()
+```
+
+### 带参数的装饰器
+```python
+import time
+
+class LogTimeParams:
+    def __init__(self, use_int=False):
+        self.use_int = use_int
+
+    def __call__(self, func):
+        def _log(*args, **kwargs):
+            beg = time.time()
+            res = func(*args, **kwargs)
+            if self.use_int:
+                print('use time: {}'.format(int(time.time()-beg)))
+            else:
+                print('use time: {}'.format(time.time()-beg))
+            return res
+        return _log
+
+@LogTimeParams(True)
+def mysleep():
+    time.sleep(1)
+
+mysleep()
+```
