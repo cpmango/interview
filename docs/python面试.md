@@ -467,3 +467,60 @@ pass
 - 使用type来定义元类
 - 元类最常见的一个使用场景就是ORM框架
 
+```python
+# 一、等价定义
+class Base:
+    pass
+
+class Child(Base):
+    pass
+
+# 等价定义: 注意Base后要加上逗号,否则就不是tuple了
+SameChild = type('Child', (Base,), {})
+
+
+# 二、等价定义
+# 加上方法
+class ChildWithMethod(Base):
+    bar = True
+
+    def hello(self):
+        print('hello')
+
+def hello(self):
+    print('hello')
+
+# 等价定义
+SameChildWithMethod = type('SameChildWithMethod', (Base,), {'bar': True, 'hello': hello})
+
+
+# 三、编写自己的元类
+# 元类继承自 type
+class LowercaseMeta(type):
+    """ 修改类的属性名称为小写的元类 """
+    def __new__(cls, name, base, attrs):
+        lower_attrs = {}
+        for k, v in attrs.items():
+            if not k.startswith('__'):  # 排除魔法方法
+                lower_attrs[k.lower()] = v
+            else:
+                lower_attrs[k] = v
+        return type.__new__(cls, name, base, lower_attrs)
+
+class LowercaseClass(metaclass=LowercaseMeta):
+    BAR = True
+
+    def HELLO(self):
+        print('hello')
+
+print(dir(LowercaseClass))
+"""
+['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq
+__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__
+', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__'
+, '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '_
+_setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref
+__', 'bar', 'hello']
+"""
+```
+
