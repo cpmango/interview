@@ -791,3 +791,83 @@ logger2 = Logger()
 print(logger1 is logger2)  # True
 ```
 
+### 结构型
+- 装饰器模式(Decorator): 无需子类化扩展对象功能
+- 代理模式(Proxy): 把一个对象的操作代理到另一个对象
+- 适配器模式(Adapter): 通过一个间接层适配统一接口
+- 外观模式(Facade): 简化复杂对象的访问问题
+- 享元模式(Flyweight): 通过对象复用(池)改善资源利用，比如连接池
+- Model-View-Controller(MVC): 解藕展示逻辑和业务逻辑
+#### 代理模式
+- 把一个对象的操作代理到另一个对象
+- 通常使用has-a组合关系
+```python
+# 定义了一个主题接口(Subject)及其真实主题(RealSubject)和代理(Proxy)
+# `Proxy`继承自主题,并在发送请求前记录日志。客户端通过主题接口与代理进行交互,
+# 代理会代理真实主题来完成操作,并添加额外的功能(如日志)
+
+import logging
+
+class Subject: 
+    def __init__(self):
+        self.subject = RealSubject()
+
+    def request(self):
+        self.subject.request()
+
+class RealSubject: 
+    def request(self):
+        print('Real request.')
+
+class Proxy(Subject): 
+    def __init__(self):
+        Subject.__init__(self)
+        self.logger = logging.getLogger('proxy_logger')
+
+    def request(self):
+        self.logger.debug('Proxy: Method called.')
+        Subject.request(self)
+
+if __name__ == '__main__': 
+    proxy = Proxy()
+    proxy.request()
+```
+
+#### 适配器模式
+- 把不同对象的接口适配到同一个接口
+- 当我们需要给不同的对象统一接口时可以使用适配器模式
+- 想象一个多功能重点头，可以给不同的电器充电，充当了适配器
+```python
+class Dog:
+    def __init__(self):
+        self.name = 'Dog'
+
+    def bark(self):
+        return "woof!"
+
+
+class Cat:
+    def __init__(self):
+        self.name = 'Cat'
+
+    def meow(self):
+        return "meow!"
+
+
+class Adapter:
+    def __init__(self, obj, **adapted_method):
+        self.obj = obj
+        self.__dict__.update(adapted_method)
+
+    def __getattr__(self, attr):
+        return getattr(self.obj, attr)
+
+
+objects = []
+dog = Dog()
+objects.append(Adapter(dog, make_noise=dog.bark))
+cat = Cat()
+objects.append(Adapter(cat, make_noise=cat.meow))
+for obj in objects:
+    print("A {0} goes {1}".format(obj.name, obj.make_noise()))
+```
