@@ -871,3 +871,137 @@ objects.append(Adapter(cat, make_noise=cat.meow))
 for obj in objects:
     print("A {0} goes {1}".format(obj.name, obj.make_noise()))
 ```
+
+### 行为型
+- 迭代器模式(Iterator): 通过统一的接口迭代对象
+- 观察者模式(Observer): 对象发生改变的时候，观察者执行相应动作
+- 策略模式(Strategy): 针对不同规模输入使用不同的策略
+#### 迭代器模式
+- Python内置对迭代器模式的支持
+- 比如我们可以用for遍历各种Iterable的数据类型
+- Python里可以实现__next__和__iter__实现迭代器;实现__iter__实现可迭代对象
+```python
+# 通过__next__和__iter__实现
+class Countdown:
+    def __init__(self, n):
+        self.n = n
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.n <= 0:
+            raise StopIteration
+        self.n -= 1
+        return self.n
+
+for num in Countdown(3):
+    print(num)
+
+
+# 通过yield实现
+def count_to_ten():
+    for num in range(1, 11):
+        yield num
+
+iterator = count_to_ten()
+for num in iterator:
+    print(num) 
+```
+
+#### 观察者模式
+- 发布订阅是一种最常用的实现方式
+- 用于解藕逻辑
+- 可以通过回调等方式实现，当发生事件事件时，调用相应的回调函数
+```python
+class Publisher:  # 发布者
+    def __init__(self):
+        self.observers = []  # 观察者
+
+    def add(self, observer):  # 加入观察者
+        if observer not in self.observers:
+            self.observers.append(observer)
+        else:
+            print("Failed to add: {}".format(observer))
+
+    def remove(self, observer):  # 移除观察者
+        try:
+            self.observers.remove(observer)
+        except ValueError:
+            print("Failed to remove: {}".format(observer))
+
+    def notify(self):  # 调用观察者的回调
+        [o.notify_by(self) for o in self.observers]
+
+
+class Formatter(Publisher):
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+        self._data = 0
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, new_value):
+        self._data = int(new_value)
+        self.notify()  # data被赋值后会执行notify
+
+
+class BinaryFormatter:  # 订阅者
+    def notify_by(self, publisher):
+        print(
+            "{}: '{}' has now bin data = {}".format(
+                type(self).__name__,
+                publisher.name,
+                bin(publisher.data)
+            )
+        )
+
+
+df = Formatter('formatter')
+bf = BinaryFormatter()
+df.add(bf)
+df.data = 3
+```
+
+#### 策略模式
+- 根据不同的输入采用不同的策略
+- 比如买东西操作10个打八折，操作20个打七折
+- 对外暴露统一的接口，内部采用不同的策略计算
+```python
+class Order:
+    def __init__(self, price, discount_strategy=None):
+        self.price = price
+        self.discount_strategy = discount_strategy
+
+    def price_after_discount(self):
+        if self.discount_strategy:
+            discount = self.discount_strategy(self)
+        else:
+            discount = 0
+        return self.price - discount
+
+    def __repr__(self):
+        fmt = "<Price: {}, price after discount: {}>"
+        return fmt.format(
+            self.price, self.price_after_discount()
+        )
+
+def ten_percent_discount(order):
+    return order.price * 0.10
+
+
+def on_sale_discount(order):
+    return order.price * 0.25 + 20
+
+
+order0 = Order(100)
+order1 = Order(100, ten_percent_discount)
+order2 = Order(100, on_sale_discount)
+print(order0)
+print(order1)
+print(order2)
+```
