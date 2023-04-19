@@ -599,3 +599,195 @@ def mysleep():
 
 mysleep()
 ```
+
+
+## 设计模式
+### 创建型
+- 工厂模式(Factory):解决对象创建问题
+- 构造模式(Builder): 控制复杂对象的创建
+- 原型模式(Prototype): 通过原型的克隆创建新的对象
+- 单例模式(Borg/Singleton): 一个类只能创建同一个对象
+- 对象池模式(Pool): 预先分配同一类型的一组实例
+- 惰性计算模式(Lazy Evaluation): 延迟计算(Python的property)
+#### 工厂模式
+**什么是工厂模式**
+
+- 解决对象创建问题
+- 解藕对象的创建和使用
+- 包括工厂方法和抽象工厂
+
+```python
+DogToy:
+    def speak(self):
+        print('wang wang')
+
+
+CatToy:
+    def speak(self):
+        print('miao miao')
+
+
+def toy_factory(toy_type):
+    if toy_type == 'dog':
+        return DogToy()
+    elif toy_type == 'cat':
+        return CatToy()
+```
+
+#### 构造模式
+**什么是构造模式**
+
+- 用来控制复杂对象的构造
+- 创建和表示分离
+- 比如你要买电脑，工厂模式直接给你需要的电脑;构造模式允许你自定义电脑的配置，组装完成后给你
+
+```python
+class Computer:
+    def __init__(self, serial_number):
+        self.serial = serial_number
+        self.memory = None
+        self.hdd = None
+        self.gpu = None
+
+    def __str__(self):
+        info = (
+            'Memory: {}GB'.format(self.memory),
+            'Hard Disk: {}GB'.format(self.hdd),
+            'Graphics Card: {}'.format(self.gpu)
+        )
+        return '\n'.join(info)
+
+
+class ComputerBuilder:
+    def __init__(self):
+        self.computer = Computer('e91f872c')
+
+    def config_memory(self, memory):
+        self.computer.memory = memory
+
+    def config_hdd(self, hdd):
+        self.computer.hdd = hdd
+
+    def config_gpu(self, gpu):
+        self.computer.gpu = gpu
+
+
+class HardwareEngineer:
+    def __init__(self):
+        self.builder = None
+
+    def construct_computer(self, memory, hdd, gpu):
+        self.builder = ComputerBuilder()
+        [step for step in (
+            self.builder.config_memory(memory),
+            self.builder.config_hdd(hdd),
+            self.builder.config_gpu(gpu)
+            )]
+
+    @property
+    def computer(self):
+        return self.builder.computer
+
+
+engineer = HardwareEngineer()
+engineer.construct_computer(hdd=500, memory=8, gpu='GTX 650 Ti')
+computer = engineer.computer
+print(computer)
+```
+
+#### 原型模式
+**什么是原型模式**
+
+- 通过克隆原型来创建实例
+- 可以使用相同的原型，通过修改部分属性来创建新的实例
+- 用途：对于一些创建实例开销比较高的地方可以用原型模式
+```python
+import copy
+
+class Prototype:
+    def __init__(self, obj):
+        self.obj = obj
+    
+    def clone(self):
+        return copy.deepcopy(self.obj)
+
+class Book:
+    def __init__(self, name, authors, price, **rest):
+        self.name = name
+        self.authors = authors
+        self.price = price
+        self.rest = rest
+    
+    def __str__(self):
+        return f'{self.name} by {", ".join(self.authors)} (${self.price})'
+
+book = Book('Python 101', ['John Doe', 'Jane Doe'], 49.9)
+prototype = Prototype(book)
+clone = prototype.clone()
+
+print(book)
+print(clone)
+print(id(book) == id(clone))  # False, object clones are different
+```
+
+#### 单例模式
+**重要，需要手写**
+
+- 一个类创建出来的对象都是同一个
+- Python的模块其实就是单例的，只会导入一次
+- 使用共享同一个实例的方式来创建单例模式
+```python
+# 1、继承类实现
+class Singleton:
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            _instance = super().__new__(cls, *args, **kwargs)
+            cls._instance = _instance
+        return cls._instance
+
+
+class MyClass(Singleton):
+    pass
+
+
+c1 = MyClass()
+c2 = MyClass()
+print(c1 is c2)  # True
+
+
+# 2、装饰器实现
+def singleton(class_):
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return get_instance
+
+@singleton
+class Singleton:
+    pass
+
+s1 = Singleton()
+s2 = Singleton()
+print(s1 is s2)  # True
+
+
+# 3、元类实现
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Logger(metaclass=Singleton): 
+    pass
+
+logger1 = Logger()
+logger2 = Logger()
+print(logger1 is logger2)  # True
+```
+
