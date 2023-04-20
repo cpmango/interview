@@ -1090,3 +1090,57 @@ print(order2)
 - Session一般是服务器生成之后给客户端(通过url参数或cookie)
 - Cookie是实现session的一种机制，通过HTTP cookie字段实现
 - Session通过在服务器保存sessionid识别用户，cookie存储在客户端
+#### TCP Socket编程原理
+- 如何使用socket模块
+- 如何建立TCP Socker客户端和服务端
+- 客户端和服务端之间的通信
+
+![](img/2023-04-20_21-14.png)
+
+##### socket客户端
+```python
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect(('127.0.0.1', 8888))
+s.sendall(b'Hello World')
+data = s.recv(1024)
+print(data.decode())
+s.close()
+```
+
+##### socket服务端
+```python
+import socket
+import time
+
+s = socket.socket()
+s.bind(('', 8888))
+s.listen()
+
+while True:
+    client, addr = s.accept()
+    print(client)
+    timer = time.ctime(time.time()) + '\r\n'
+    client.send(timer.encode())
+    client.close()
+```
+
+#### HTTP Socket编程原理
+**如何使用socket发送http请求**
+
+- 使用socket接口发送http请求
+- HTTP建立在TCP基础之上
+- HTTP是基于文本的协议
+```python
+import socket
+
+s = socket.socket()
+s.connect(('www.baidu.com', 80))
+
+http = b"GET / HTTP/1.1\r\nHost: www.baidu.com\r\n\r\n"
+s.sendall(http)
+buf = s.recv(1024)
+print(buf)
+s.close()
+```
