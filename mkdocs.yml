@@ -1,6 +1,5 @@
 site_name: interviewSet
 site_url: https://example.com/
 nav:
-  - Home: index.md
-  - python面试: python面试.md
+  - python面试: python-interview.md
 theme: readthedocs
