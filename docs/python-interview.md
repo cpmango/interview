@@ -1144,3 +1144,135 @@ buf = s.recv(1024)
 print(buf)
 s.close()
 ```
+
+### IO多路复用
+#### 五种IO模型
+- 阻塞IO(Blocking IO)
+- 非阻塞IO(Nonblocking IO)
+- IO多路复用(IO multiplexing)
+- 信号驱动IO(Signal Driven IO)
+- 异步IO(Asynchronous IO)
+#### 如何提升服务端并发能力
+- 多线程模型：创建新的线程处理请求
+- 多进程模型：创建新的进程处理请求
+- *线程/进程创建开销比较大，可以用线程池方式解决;进程线程比较占用资源，难以同时创建太多*
+- IO多路复用：实现单进程同时处理多个socket请求
+#### 什么是IO多路复用
+**操作系统提供的同时监听多个socket的机制**
+
+- 为了实现高并发需要一种机制并发处理多个socket
+- Linux常见的是select/poll/epoll
+- 可以使用单进程单线程处理多个socket
+
+```python
+while True:
+    events = sel.select()
+    for key, mask in events:
+        callback = key.data
+        callback(key.fileobj, mask)
+```
+
+![](img/2023-04-20_22-42.png)
+#### python如何实现IO多路复用
+**python封装了操作系统的IO多路复用**
+
+- Python的IO多路复用基于操作系统实现(select/poll/epoll)
+- Python2 select模块
+- Python3 selectors模块
+### python并发网络编程
+#### 常用的并发网络库
+- Tornado: 并发网络库，同时也是一个web微框架
+- Gevent：绿色线程(greenlet)实现并发，猴子补丁修改内置socket
+- Asyncio：Python3内置的并发网络库，基于原生协程
+#### Tornado框架
+**Tornado适用于微服务，实现Restful接口**
+
+- 底层基于Linux多路复用
+- 可以通过协程或者回调实现异步编程
+- 生态不完善，相应的异步框架比如ORM不完善
+```python
+import tornado.ioloop
+import tornado.web
+from tornado.httpclient import AsyncHTTPClient
+
+
+class APIHandler(tornado.web.RequestHandler):
+    async def get(self):
+        url = 'http://httpbin.org/get'
+        http_client = AsyncHTTPClient()
+        resp = await http_client.fetch(url)
+        print(resp.body)
+        return resp.body
+
+
+def make_app():
+    return tornado.web.Application([
+        (r"/api", APIHandler),
+    ])
+
+
+if __name__ == "__main__":
+    app = make_app()
+    app.listen(8888)
+    tornado.ioloop.IOLoop.current().start()
+```
+#### Gevent
+**高性能的并发网络库**
+
+- 基于轻量级路色线程(greenlet)实现并发
+- 需要注意monkey patch, gevent修改了内置的socket改为非阻塞
+- 配合gunicorn和gevent部署作为wsgi server
+- 学习资料：<<Gevent程序员指南>>
+```python
+import gevent.monkey
+gevent.monkey.patch_all()
+
+import gevent
+import requests
+
+
+def fetch(i):
+    url = 'http://httpbin.org/get'
+    resp = requests.get(url)
+    print(len(resp.text), i)
+
+def asynchronous():
+    threads = []
+    for i in range(1, 10):
+        threads.append(gevent.spawn(fetch, i))
+    gevent.joinall(threads)
+
+
+print('Asynchronous:')
+asynchronous()
+```
+#### Asyncio
+**基于协程实现的内置并发网络库**
+
+- Python3引入到内置库，协程+事件循环
+- 生态不够完善，没有大规模生产环境检验
+- 目前应用不够广泛，基于Aiohttp可以实现一些小的服务
+```python
+import asyncio
+from aiohttp import ClientSession
+
+async def fetch(url,session):
+    async with session.get(url) as response:
+        return await response.read()
+
+async def run(r=10):
+    url = "http://httpbin.org/get"
+    tasks = []
+
+    async with ClientSession() as session:
+        for i in range(r):
+            task = asyncio.ensure_future(fetch(url, session))
+            tasks.append(task)
+        responses = await asyncio.gather(*tasks)
+        for resp_body in responses:
+            print(len(resp_body))
+
+loop = asyncio.get_event_loop()
+future = asyncio.ensure_future(run())
+loop.run_until_complete(future)
+```
