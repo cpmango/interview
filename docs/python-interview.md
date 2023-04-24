@@ -1547,3 +1547,66 @@ if __name__ == '__main__':
 - 用于实现业务对象与数据表中的字段映射
 - 优势：代码更加面向对象，代码量更少，灵活性高，提升开发效率
 - 常见框架：Sqlalchemy、Django ORM、Peewee
+### web安全
+#### SQL注入
+- 是什么：通过构造特殊的输入参数传入web应用，导致后端执行了恶意SQL
+- 原因：通常由于程序员未对输入进行过滤，直接动态拼接SQL产生
+- 可以使用开源工具sqlmap,SQLninja检测
+##### demo演示
+```python
+"""
+CREATE TABLE `users` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NULL,
+  `email` VARCHAR(45) NULL,
+  `password` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`)
+);
+
+insert into users (name,email,password) values ('laowang','laowang@qq.com',md5('laowang123'));
+insert into users (name,email,password) values ('zhangshan','zhangshan@qq.com',md5('zhangshan123'));
+insert into users (name,email,password) values ('lisi','lisi@gmail.com',md5('lisi'));
+"""
+# sql注入演示代码
+import os
+import MySQLdb
+
+db = MySQLdb.connect(
+    host="localhost",
+    user="root",
+    passwd=os.getenv('MYSQL_PASS'),
+    db='test'
+)
+cur = db.cursor()
+
+name = input("Enter name: ")
+print("您输入的用户name是：{}".format(name))
+password = input("Enter password: ")
+print("您输入的密码是：{}".format(password))
+# 直接拼接sql参数
+sql = "SELECT * FROM users WHERE name='"+name+"'"+" AND password=md5('"+password+"')"
+print(sql)
+cur.execute(sql)
+for row in cur.fetchall():
+    print(row)
+
+db.close()
+```
+![](img/2023-04-24_21-42.png)
+
+##### 防范措施
+**web安全一大原则：永远不要相信用户的任何输入**
+
+- 对输入参数做好检查(类型和范围);过滤和转义特殊字符
+- 不要直接拼接sql，使用ORM可以大大降低sql注入风险
+- 数据库层：做好权限管理配置;不要明文存储敏感信息
+#### XSS
+- Cross Site Scripting,跨站脚本攻击
+- 恶意用户将代码直入到提供给其他用户使用的页面中，未经转义的恶意代码输出到其他用户的浏览器被执行
+- 用户浏览页面的时候嵌入页面中的脚本(js)会被执行，攻击用户
+- 主要分为两类：反射型(非持久型)、存储型(持久型)
+
+![](img/2023-04-24_22-14.png)
+![](img/2023-04-24_22-15.png)
+
+#### CSRF
