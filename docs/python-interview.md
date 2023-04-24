@@ -1500,3 +1500,50 @@ loop.run_until_complete(future)
     1. 多级缓存：不同级别的key设置不同的超时时间
     2. 随机超时：key的超时时间随即设置，防止同时超时
     3. 架构层：提升系统可用性。监控、报警完善
+
+## web后端
+### WSGI
+- 是什么：Python Web Server Gateway Interface(pep3333)
+- 为什么：解决Python Web Server乱象mod_python,CGI,FastCGI等
+- 描述了Web Server(Gunicorn/uWSGI)如何与web框架(Flask/Django)交互，Web框架如何处理请求
+
+#### WSGI定义
+```python
+def application(environ, start_response)
+```
+- application 就是WSGI app, 一个可调用对象
+- 参数：
+    1. environ: 一个包含WSGI环境信息的字典，由WSGI服务器提供，常见的key有PATH_INFO, QUERY_STRING等
+    2. start_response: 生成WSGI响应的回调函数，接收两个参数，status和headers
+- 函数返回响应体的迭代器
+#### 一个简单的兼容WSGI的web应用
+```python
+def myapp(environ, start_response):
+    print(environ['QUERY_STRING'])
+    status = '200 OK'
+    headers = [('Content-Type', 'text/html;charset=utf8')]
+
+    start_response(status, headers)
+    return [b'<h1>Hello World</h1>']  # 可迭代对象，返回字节
+
+
+if __name__ == '__main__':
+    from wsgiref.simple_server import make_server
+    httpd = make_server('127.0.0.1', 8888, myapp)
+    httpd.serve_forever()
+```
+### 常用的python web框架
+- Django: 大而全，内置ORM、Admin等组件，第三方插件较多
+- Flask: 微框架，插件机制，比较灵活
+- Tornado: 异步支持的微框架和异步网络库
+- cookiecutter: 生成统一的项目模板
+### MVC模式
+- Model(模型): 负责业务对象和数据库的交互(ORM)
+- View(视图): 负责与用户的交互展示
+- Controller(控制器): 接收请求参数调用模型和视图完成请求
+### ORM
+**对象关系映射(Object Relational Mapping)**
+
+- 用于实现业务对象与数据表中的字段映射
+- 优势：代码更加面向对象，代码量更少，灵活性高，提升开发效率
+- 常见框架：Sqlalchemy、Django ORM、Peewee
