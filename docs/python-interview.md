@@ -1610,3 +1610,27 @@ db.close()
 ![](img/2023-04-24_22-15.png)
 
 #### CSRF
+
+### 前后端分离
+1.是什么
+
+后端只负责提供数据接口，不再渲染模板，前端获取数据并呈现
+
+2.优点
+
+- 前后端解藕，接口复用(前端和客户端公用接口)，减少开发量
+- 各司其职，前后端同步开发，提升工作效率。定义好接口规范
+- 更有利于调试(mock)、测试和运维部署
+### RESTful
+- 表现层状态转移，由HTTP协议的主要设计者Roy Fielding提出
+- 资源(Resources)、表现层(Representation)、状态转化(State Transfer)
+- 是一种以资源为中心的web软件架构风格，可以用Ajax和RESTful web服务构建应用
+### 如何设计RESTful API
+
+|HTTP方法|URL|动作|
+|---|------|---|
+|GET|http://[hostname]/api/users|检索用户列表|
+|GET|http://[hostname]/api/users/[user_id]|检索单个用户|
+|POST|http://[hostname]/api/users|创建新用户|
+|PUT|http://[hostname]/api/users/[user_id]|更新用户信息|
+|DELETE|http://[hostname]/api/users/[user_id]|删除用户|
