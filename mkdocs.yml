@@ -33,6 +33,5 @@ nav:
   - 后端技术栈:
       - python面试: python-interview.md
       - redis: redis.md
-  - 面试题库:
-      - python: redis.md
+  - 面试题库: ""
   - 关于我: about.md
